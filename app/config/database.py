@@ -7,8 +7,12 @@ import logging
 logger = logging.getLogger()
 flag = load_dotenv()
 
-if flag :
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL and flag:
   DATABASE_URL = f"mysql+pymysql://{os.getenv('MYSQL_DATA_USER')}:{os.getenv('MYSQL_DATA_PASSWORD')}@{os.getenv('MYSQL_DATA_HOST')}:{os.getenv('MYSQL_DATA_PORT')}/{os.getenv('MYSQL_DATA_DATABASE')}"
+
+if DATABASE_URL:
   logger.info("Database setting success")
 else:
   raise ValueError("Database setting failed")

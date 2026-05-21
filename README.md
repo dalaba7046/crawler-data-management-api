@@ -19,6 +19,8 @@
 - SQLAlchemy
 - Pydantic
 - MySQL / PyMySQL
+- PostgreSQL / psycopg2
+- MongoDB / PyMongo
 - pandas / openpyxl
 - Docker
 - Uvicorn
@@ -33,6 +35,8 @@
 | GET | `/v1/item/item/{item_id}` | 查詢指定 SKU 資料 |
 | POST | `/v1/item/item` | 新增 SKU 資料 |
 | PUT | `/v1/item/item/{item_id}` | 軟刪除指定 SKU 資料 |
+| GET | `/v1/mongo/health` | 檢查 MongoDB 連線 |
+| GET | `/v1/mongo/raw-items` | 查詢 MongoDB 原始爬蟲文件範例 |
 
 ## 資料模型
 
@@ -61,6 +65,15 @@ app/
 │   └── jd_schema.py
 └── services/
     └── jd/
+frontend/
+├── src/
+│   ├── App.vue
+│   ├── main.js
+│   └── style.css
+├── Dockerfile
+├── index.html
+├── package.json
+└── vite.config.js
 ```
 
 ## 執行方式
@@ -78,6 +91,69 @@ uvicorn app.main:app --host 0.0.0.0 --port 80
 ```
 
 或使用 Dockerfile 建立容器化執行環境。
+
+### 使用 Docker Compose 啟動 PostgreSQL 測試環境
+
+專案預設使用 PostgreSQL，並會透過初始化 SQL 建立 `def_sku_list` 與假資料。
+
+```bash
+docker compose up --build api postgres
+```
+
+API 啟動後可用以下路由檢查：
+
+```bash
+curl http://localhost:8000/
+curl http://localhost:8000/v1/item/items
+curl http://localhost:8000/v1/item/item/SKU-POSTGRES-001
+curl -X POST http://localhost:8000/v1/item/item \
+  -H "Content-Type: application/json" \
+  -d "{\"SKU_ID\":\"SKU-POSTGRES-004\",\"SITE_ID\":\"JD\"}"
+curl -X PUT http://localhost:8000/v1/item/item/SKU-POSTGRES-004
+```
+
+### 切換 MySQL 測試環境
+
+若要改用 MySQL，在啟動前設定 `DATABASE_URL`：
+
+```powershell
+$env:DATABASE_URL="mysql+pymysql://crawler:crawler_password@mysql:3306/crawler_data"
+docker compose up --build api mysql
+```
+
+MySQL 初始化 SQL 也會建立相同的 `def_sku_list` 表與假資料。若需要回到 PostgreSQL，移除 shell 中的 `DATABASE_URL` 或改回：
+
+```powershell
+$env:DATABASE_URL="postgresql+psycopg2://crawler:crawler_password@postgres:5432/crawler_data"
+```
+
+本機不透過 Docker 執行時，可在 `.env` 中設定：
+
+```text
+DATABASE_URL=postgresql+psycopg2://crawler:crawler_password@localhost:5432/crawler_data
+```
+
+### 啟動 Vue 前端儀表板
+
+前端位於 `frontend/`，預設連到 `http://localhost:8000` 的 FastAPI。
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+瀏覽器開啟：
+
+```text
+http://localhost:5173
+```
+
+若使用 Docker Compose 啟動完整環境：
+
+```bash
+docker compose up --build api frontend postgres mongo
+```
 
 ## 履歷摘要用語
 

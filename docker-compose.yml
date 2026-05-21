@@ -1,0 +1,64 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - api
+
+  api:
+    build: .
+    ports:
+      - "8000:80"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://crawler:crawler_password@postgres:5432/crawler_data}
+      MONGODB_URL: ${MONGODB_URL:-mongodb://crawler:crawler_password@mongo:27017/spider?authSource=admin}
+      MONGO_DATABASE: ${MONGO_DATABASE:-spider}
+    depends_on:
+      - postgres
+      - mongo
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crawler
+      POSTGRES_PASSWORD: crawler_password
+      POSTGRES_DB: crawler_data
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init/postgres:/docker-entrypoint-initdb.d:ro
+
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: crawler
+      MONGO_INITDB_ROOT_PASSWORD: crawler_password
+      MONGO_INITDB_DATABASE: spider
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./docker/init/mongo:/docker-entrypoint-initdb.d:ro
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: crawler_data
+      MYSQL_USER: crawler
+      MYSQL_PASSWORD: crawler_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/init/mysql:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  mongo_data:
+  postgres_data:
+  mysql_data:

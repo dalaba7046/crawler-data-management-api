@@ -13,3 +13,7 @@ venv/
 # Local editor files
 .vscode/
 .idea/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
